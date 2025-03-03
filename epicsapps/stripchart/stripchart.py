@@ -99,6 +99,8 @@ Matt Newville <newville@cars.uchicago.edu>
         self.paused = False
         self.nmax = nmax
         self.ntrim = ntrim
+        self.plot_ymax = None
+        self.plot_ymin = None
         if self.nmax is None:
             self.nmax = NMAX_DEFAULT
         if self.ntrim is None:
@@ -247,8 +249,13 @@ Matt Newville <newville@cars.uchicago.edu>
         time_label = SimpleText(panel, '    Time Range: ',  minsize=(85, -1),
                                 style=LSTY)
 
+        self.plot_min = TextCtrl(panel, '', size=(90, -1), action=self.onSetMin)
+        self.plot_max = TextCtrl(panel, '', size=(90, -1), action=self.onSetMax)
+
         btnsizer.Add(self.pause_btn,   0, wx.ALIGN_LEFT, 2)
         btnsizer.Add(self.resume_btn,  0, wx.ALIGN_LEFT, 2)
+        btnsizer.Add(self.plot_min,  0, wx.ALIGN_LEFT, 2)
+        btnsizer.Add(self.plot_max,  0, wx.ALIGN_LEFT, 2)
         btnsizer.Add(time_label,       1, wx.ALIGN_LEFT, 2)
         btnsizer.Add(self.time_ctrl,   0, wx.ALIGN_LEFT, 2)
         btnsizer.Add(self.time_choice, 0, wx.ALIGN_LEFT, 2)
@@ -256,6 +263,14 @@ Matt Newville <newville@cars.uchicago.edu>
         panel.SetAutoLayout(True)
         panel.SetSizer(btnsizer)
         btnsizer.Fit(panel)
+
+    def onSetMin(self, event=None):
+        try: self.plot_ymin = float(event)
+        except: self.plot_ymin = None
+
+    def onSetMax(self, event=None):
+        try: self.plot_ymax = float(event)
+        except: self.plot_ymax = None
 
     def build_menus(self):
         mbar = wx.MenuBar()
@@ -597,10 +612,14 @@ Matt Newville <newville@cars.uchicago.edu>
                 use_update = False
             xmin = tmin/86400.0
             xmax = tmax/86400.0
+            
+            plot_ymax = ymax if self.plot_ymax == None else self.plot_ymax
+            plot_ymin = ymin if self.plot_ymin == None else self.plot_ymin
+
             if use_update:
                 try:
                     ppan.update_line(i, tdat, ydat, draw=False, yaxes=yaxes)
-                    ppan.set_xylims((xmin, xmax, ymin, ymax), yaxes=yaxes)
+                    ppan.set_xylims((xmin, xmax, plot_ymin, plot_ymax), yaxes=yaxes)
                     setattr(ppan.conf, ylabel, desc)
                 except:
                     use_update = False
@@ -614,7 +633,7 @@ Matt Newville <newville@cars.uchicago.edu>
                 opts[ylabel] = desc
                 plot = ppan.plot if i==0 else ppan.oplot
                 plot(tdat, ydat, yaxes=yaxes, color=color,
-                     ymin=ymin, ymax=ymax,
+                     ymin=plot_ymin, ymax=plot_ymax,
                      ylog_scale=ylog_scale, label=desc, **opts)
 
 
